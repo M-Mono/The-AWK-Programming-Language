@@ -1,0 +1,957 @@
+% vim: ts=4 sts=4 sw=4 et tw=75
+
+\chapter{快速入门}
+\label{chap:an_awk_tutorial}
+
+\marginpar{1}
+Awk 是一种使用方便且表现力很强的编程语言, 它可以应用在多种不同的计算与数据
+处理任务中. 这一章是一个简短的教程, 目的是为了能让读者尽可能快地写出自己的
+awk 程序.
+第 \ref{chap:the_awk_language} 章对整个 awk 语言进行描述, 剩下的章节展示了
+在多种不同的领域中, 如何使用 awk 解决问题. 在书中出现的例子, 读者应该
+会感到非常有用, 有趣且具有指导作用.
+
+\section{开始}
+\label{sec:getting_started}
+
+实用的 awk 程序通常都很短, 只有一两行. 假设有一个文件, 叫作
+\filename{emp.data}, 这个文件包含有名字, 每小时工资 (以美元为单位),
+工作时长, 每一行代表一个雇员的记录, 就像这样
+\begin{file}
+    Beth    4.00    0
+    Dan     3.75    0
+    Kathy   4.00    10
+    Mark    5.00    20
+    Mary    5.50    22
+    Susie   4.25    18
+\end{file}
+现在你想要打印每位雇员的名字以及他们的报酬 (每小时工资乘以工作时长), 而雇员
+的工作时长必须大于零. 这种类型的工作是 awk 的设计目标之一, 所以会很简单.
+只要键入下面这一行即可:
+\begin{awkcode}
+    awk '$3 > 0 { print $1, $2 * $3 }' emp.data
+\end{awkcode}
+该行命令告诉操作系统运行 awk 程序, 被运行的程序用单引号包围起来, 从输入文件
+\marginpar{2}
+\filename{emp.data} 获取数据. 被单引号包围的部分是一个完整的 awk 程序. 它由
+一个单独的 \cterm{\mbox{模式}\mbox{--}动作}\ 语句
+(\term{pattern-action statement}) 组成.
+模式 \verb'$3 > 0' 扫描每一个输入行, 如果该行的第三列 (或者说 \cterm{字段}
+(\term{field})) 大于零, 则动作
+\begin{awkcode}
+    { print $1, $2 * $3 }
+\end{awkcode}
+就会为每一个匹配行打印第一个字段, 以及第二与第三个字段的乘积.
+
+如果想知道哪些员工在偷懒, 键入
+\begin{awkcode}
+    awk '$3 == 0 { print $1 }' emp.data
+\end{awkcode}
+模式 \verb'$3 == 0' 匹配第三个字段为零的行, 动作
+\begin{awkcode}
+    { print $1 }
+\end{awkcode}
+打印该行的第一个字段.
+
+在阅读这本书时, 请尝试运行并修改书中的程序. 由于大多数程序都很简短,
+通过这种方式读者可以快速理解 awk 的工作方式. 在 Unix 系统中, 可以这样运行
+上面提到的两个示例程序:
+\begin{shell}
+    $ awk '$3 > 0 { print $1, $2 * $3 }' emp.data
+    Kathy 40
+    Mark 100
+    Mary 121
+    Susie 76.5
+    $ awk '$3 == 0 { print $1 }' emp.data
+    Beth
+    Dan
+    $
+\end{shell}
+行首的字符 \verb'$' 是 Shell 的命令提示符, 在其他机器上或许会不一样.
+
+\subsection{AWK 程序的结构}
+\label{subsec:the_structure_of_an_awk_program}
+
+现在让我们回退一步, 看一下到底发生了什么. 在上面的命令行中, 被单引号包围的
+部分是使用 awk 语言编写的程序. 本章的每一个 awk 程序都是由一个或多个
+\mbox{模式}\mbox{--}动作\ 语句组成的序列:
+\begin{pattern}
+    \textit{pattern} \texttt{\{} \textit{action} \texttt{\}} \par
+    \textit{pattern} \texttt{\{} \textit{action} \texttt{\}} \par
+    ...
+\end{pattern}
+awk 的基本操作是在由输入行组成的序列中, 陆续地扫描每一行, 搜索可以
+被模式 \cterm{匹配} (\term{match}) 的行. ``匹配'' 的精确含义依赖于问题中
+的模式, 比如, 对于 \verb'$3 > 0', 意味着 ``条件为真''.
+
+\marginpar{3}
+每一个输入行轮流被每一个模式测试. 每匹配一个模式, 对应的动作 (可能包含多个
+步骤) 就会执行. 然后下一行被读取, 匹配重新开始. 这个过程会一起持续
+到所有的输入被读取完毕为止.
+
+上面的程序是模式与动作的典型例子. 程序
+\begin{awkcode}
+    $3 == 0 { print $1 }
+\end{awkcode}
+由一条单独的 \patact 语句组成: 如果某行的第 3 个字段为 0, 那么它的第 1 个
+字段就会被打印出来.
+
+在一个 \patact 语句中, 模式或动作可以省略其一,
+但不能两者同时被省略. 如果一个
+模式没有动作, 例如
+\begin{awkcode}
+    $3 == 0
+\end{awkcode}
+会将每一个匹配行 (也就是条件判断为真的行) 打印出来. 这个程序将文件
+\filename{emp.data} 中第3个字段为0的两行打印出来:
+\begin{file}
+    Beth    4.00    0
+    Dan     3.75    0
+\end{file}
+
+如果只有动作而没有模式, 例如
+\begin{awkcode}
+    { print $1 }
+\end{awkcode}
+对于每一个输入行, 动作 (在这个例子里是打印第1个字段) 都会被执行.
+
+因为模式与动作都是可选的, 所以用花括号将动作包围起来, 以便区分两者.
+
+\subsection{运行 AWK 程序}
+\label{running_an_awk_program}
+
+运行一个 awk 程序有多种方式. 可以键入下面这种形式的命令
+\begin{pattern}
+    \texttt{awk} \texttt{'}\textit{program}\texttt{'} \textit{input files}
+\end{pattern}
+这个命令对指定的输入文件的每一行, 执行 \textit{program}. 例如你可以键入
+\begin{awkcode}
+    awk '$3 == 0 { print $1 }' file1 file2
+\end{awkcode}
+来打印文件 \filename{file1} 与 \filename{file2} 的每一行的第一个字段
+(条件是该行的第3个字段为0).
+
+也可以在命令行上省略输入文件, 只要键入
+\begin{pattern}
+    \texttt{awk} \texttt{'}\textit{program}\texttt{'}
+\end{pattern}
+在这种情况下, awk 会将 \textit{program} 应用到你接下来在终端输入的内容上面,
+直到键入一个文件结束标志 (Unix 系统是组合键 control-d). 下面是一个在 Unix
+上运行的例子
+\marginpar{4}
+\begin{pattern}
+    \indent\verb"$ awk '$3 == 0 { print $1 }'"\par
+    \indent\verb'Beth    4.00    0'\par
+    \indent\textbf{\texttt{Beth}}\par
+    \indent\verb'Dan     3.75    0'\par
+    \indent\textbf{\texttt{Dan}}\par
+    \indent\verb'Kathy   3.75    10'\par
+    \indent\verb'Kathy   3.75    0'\par
+    \indent\textbf{\texttt{Kathy}}\par
+    \indent\verb'...'\par
+\end{pattern}
+由 awk 打印的字符加粗显示.
+
+这种行为对测试 awk 程序来说非常方便: 键入程序与数据, 检查程序的输出. 我们再
+次建议读者运行并修改书中的程序.
+
+注意到, 命令行中的程序被单引号包围. 这个规定可以防止程序中的字符 (例如
+\verb'$') 被 shell 解释, 也可以让程序的长度多于一行.
+
+当程序的长度比较短时 (只有几行), 这种安排会比较方便. 如果程序比较长, 更好的
+做法是将它们放在一个单独的文件中, 如果文件名是 \filename{progfile} 的话,
+运行时只要键入
+\begin{pattern}
+    \texttt{awk -f progfile} \textit{optional list of files}
+\end{pattern}
+选项 \verb'-f' 告诉 awk 从文件中提取程序. 在 \filename{progfile} 出现的地方
+可以是任意的文件名.
+
+\subsection{错误}
+\label{subsec:errors}
+
+如果你在 awk 程序犯了一个错误, awk 会显示一个诊断信息. 例如, 如果打错了一
+个花括号, 就像这样
+\begin{awkcode}
+    awk '$3 == 0 [ print $1 }' emp.data
+\end{awkcode}
+将会打印一条这样的消息
+\begin{file}
+    awk: syntax error at source line 1
+    context is
+            $3 == 0 >>> [ <<<
+            extra }
+            missing ]
+    awk: Bailing out at source line 1
+\end{file}
+``Syntax error'' 意味着你犯了一个语法错误, 这个错误被发现的地方用
+\verb'>>> <<<' 标记. ``Bailing out'' 意味着无法恢复. 有时候可以得到更
+多的关于错误的信息, 例如, 错误信息报告了一个不匹配的花括号或括号.
+
+由于发生了语法错误, awk 不会尝试执行这个程序.
+然而有些错误直到运行时才会检测到. 例如, 程序尝试用 0 作除数, 这时候 awk
+会停止处理, 接着报告输入行的行号, 以及程序中尝试进行除法运算的代码所在的
+行号.
+
+\section{简单的输出}
+\label{sec:simple_output}
+
+\marginpar{5}
+本章的余下部分包含了一系列简短并且典型的 awk 程序, 这些程序都是对
+文件 \filename{emp.data} 进行处理. 我们会简单地介绍这些程序是怎么工作的, 但
+这些例子主要用于阐述有用的操作, 这些操作很容易用 awk 完成, 包括打印字段,
+选择输入, 以及变换数据. 我们不会展现 awk 所能做的所有事情, 也不会对
+细节作过多的解释. 但是阅读完这一章, 读者将有能力利用 awk
+完成相当数量的工作, 而且会发现阅读后面的章节变得更加容易.
+
+我们只将程序的主体显示出来, 而不是完整的命令行. 在每一种情况下, 程序或者可以
+被包围在一对单引号中, 作为 \awk 命令的第一个参数来运行, 也可以将其放入一
+个文件中, 通过带有 \verb'-f' 选项的 \awk 命令来运行.
+
+ awk 的数据只有两种类型: 数值与由字符组成的字符串. 文件
+\filename{emp.data} 是很典型的待处理数据, 它既含有单词, 也包括数值, 且字
+段之间通过制表符或空格分隔.
+
+awk 从它的输入中每次读取一行, 将行分解为一个个的字段 (默认将字段看作是
+非空白字符组成的序列). 当前输入行的第一个字段叫作 \verb'$1', 第二个
+是 \verb'$2', 依次类推. 一整行记为 \verb'$0'. 每行的字段数有可能不一样.
+
+通常情况下, 我们需要做的是打印每一行的部分或全部字段, 也可能会做一些计算.
+这一节中的所有程序都是这种形式.
+
+\subsection{打印每一行}
+\label{subsec:printing_every_line}
+
+如果一个动作没有模式, 对于每一个输入行, 该动作都会被执行. 语句 \print 会
+打印每一个当前输入行, 所以程序
+\begin{awkcode}
+    { print }
+\end{awkcode}
+会将它所有的输入打印到标准输出. 因为 \verb'$0' 表示一整行, 所以程序
+\begin{awkcode}
+    { print $0 }
+\end{awkcode}
+完成同样的工作.
+
+\subsection{打印某些字段}
+\label{subsec:printing_certain_fields}
+
+在一个 \print 语句中可以将多个条目打印到同一个输出行中. 打印每一个输入行
+的第1与第3个字段的程序是
+\begin{awkcode}
+    { print $1, $3 }
+\end{awkcode}
+当 \filename{emp.data} 作为输入时, 它会输出
+\marginpar{6}
+\begin{file}
+    Beth 0
+    Dan 0
+    Kathy 10
+    Mark 20
+    Mary 22
+    Susie 18
+\end{file}
+在 \print 语句中由逗号分隔的表达式, 在输出时默认用一个空格符分隔. 由
+\print 打印的每一行都由一个换行符终止. 这些默认行为都可以修改, 我们将在第
+\ref{chap:the_awk_language} 章讨论如何修改.
+
+\subsection{\texttt{NF}, 字段的数量}
+\label{subsec:nf_the_number_fields}
+
+有时候, 必须总是通过 \verb'$1', \verb'$2' 这样的形式引用字段, 但是任何表
+达式都可以出现在 \verb'$' 的后面, 用来指明一个字段的编号: 表达式被求值, 求出
+的值被当作字段的编号. Awk 计算当前输入行的字段数量, 并将它存储在一个内建的
+变量中, 这个变量叫作 \nf. 因此程序
+\begin{awkcode}
+    { print NF, $1, $NF }
+\end{awkcode}
+将会打印每一个输入行的字段数量, 第一个字段, 以及最后一个字段.
+
+\subsection{计算和打印}
+\label{subsec:computing_and_printing}
+
+也可以用字段的值进行计算, 并将计算得到的结果放在输出语句中. 程序
+\begin{awkcode}
+    { print $1, $2 * $3 }
+\end{awkcode}
+是一个很典型的例子, 它会打印雇员的名字与报酬 (每小时工资乘以工作时长):
+\begin{file}
+    Beth 0
+    Dan 0
+    Kathy 40
+    Mark 100
+    Mary 121
+    Susie 76.5
+\end{file}
+我们待会儿就会展示如何将输出做得更好看.
+
+\subsection{打印行号}
+\label{subsec:printing_line_numbers}
+
+Awk 提供了另一个内建变量 \nr, 这个变量计算到目前为止, 读取到的行的数量.
+我们可以使用 \nr 和 \verb'$0' 为 \filename{emp.data} 的每一行加上行号:
+\begin{awkcode}
+    { print NR, $0 }
+\end{awkcode}
+输出就像这样:
+\marginpar{7}
+\begin{file}
+    1 Beth    4.00    0
+    2 Dan     3.75    0
+    3 Kathy   4.00    10
+    4 Mark    5.00    20
+    5 Mary    5.50    22
+    6 Susie   4.25    18
+\end{file}
+
+\subsection{将文本放入输出中}
+\label{subsec:putting_text_in_the_output}
+
+也可以把单词放在字段与算术表达式之间:
+\begin{awkcode}
+    { print "total pay for", $1, "is", $2 * $3 }
+\end{awkcode}
+输出
+\begin{file}
+    total pay for Beth is 0
+    total pay for Dan is 0
+    total pay for Kathy is 40
+    total pay for Mark is 100
+    total pay for Mary is 121
+    total pay for Susie is 76.5
+\end{file}
+在 \print 语句中, 被双引号包围的文本会和字段, 以及运算结果一起输出.
+
+\section{更精美的输出}
+\label{sec:fancier_output}
+
+\print 用于简单快速的输出. 如果读者想要格式化输出, 那么就需要使用 \printf
+语句. 正如我们将要在 \ref{sec:output} 节看到的那样, \printf 几乎可以产生
+任何种类的输出, 但在这一节, 我们仅仅展现它的一小部分能力.
+
+\subsection{字段排列}
+\label{subsec:lining_up_fields}
+
+\printf 语句具有形式
+\begin{pattern}
+    \texttt{printf(}\textit{format}\texttt{,} \textit{value$_1$}\texttt{,}
+    \textit{value$_2$}\texttt{, ... ,} \textit{value$_n$}\texttt{)}
+\end{pattern}
+\textit{format} 是一个字符串, 它包含按字面打印的文本, 中间散布着格式说明符,
+格式说明符用于说明如何打印值. 一个格式说明符是一个 \verb'%', 后面跟着几个
+字符, 这些字符控制一个 \textit{value} 的输出格式. 第一个格式说明符说明
+\textit{value$_1$} 的输出格式, 第二个格式说明符说明 \textit{value$_2$} 的
+输出格式, 依次类推. 于是, 格式说明符的数量应该和被打印的 \textit{value} 一
+样多.
+
+这个程序使用 \printf 打印每位雇员的报酬:
+\begin{awkcode}
+    { printf("total pay for %s is $%.2f\n", $1, $2 * $3) }
+\end{awkcode}
+这个 \printf 语句的格式字符串包含两个格式说明符. 第一个格式说明符
+\marginpar{8}
+\verb'%s', 是说将第一个值 \verb'$1', 以字符串的形式打印; 第二个格式说明符
+\verb'%.2f', 是说将第二个值 \verb'$2*$3', 按照数值格式打印, 且带有两位小
+数. 格式
+字符串的其他内容 (包括美元符) 按照字面值打印; 字符串末尾的 \verb'\n' 表示
+换行符, 该符号使后面的输出从下一行开始. 当 \filename{emp.data} 作为输入时,
+这个程序输出:
+\begin{file}
+    total pay for Beth is $0.00
+    total pay for Dan is $0.00
+    total pay for Kathy is $40.00
+    total pay for Mark is $100.00
+    total pay for Mary is $121.00
+    total pay for Susie is $76.50
+\end{file}
+使用 \printf 不会自动产生空格符或换行符; 用户必须自己创建它们, 不要忘了
+\verb'\n'.
+
+另外一个程序打印每位雇员的名字与报酬:
+\begin{awkcode}
+    { printf("%-8s $%6.2f\n", $1, $2 * $3) }
+\end{awkcode}
+第一个格式说明符 \verb'%-8s', 将名字左对齐输出, 占用8个字符的宽度. 第二个
+格式说明符 \verb'%6.2f', 将报酬以带有两位小数的数值格式打印出来,
+数字至少占用
+6个字符的宽度:
+\begin{awkcode}
+    Beth     $  0.00
+    Dan      $  0.00
+    Kathy    $ 40.00
+    Mark     $100.00
+    Mary     $121.00
+    Susie    $ 76.50
+\end{awkcode}
+更多的关于 \printf 的例子会慢慢加以介绍, 而完整描述在
+\ref{sec:output} 节.
+
+\subsection{输出排序}
+\label{subsec:sorting_the_output}
+
+设想一下你想要为每一位雇员打印所有的数据, 包括他的报酬, 报酬按照升序排列.
+最简单的办法是使用 awk 在每一位雇员的记录前加上报酬, 然后再通过一个排序
+程序进行排序, 在 Unix 中, 命令行\footnote{原文中 \texttt{sort} 命令没有
+带上选项 \texttt{-n}. --- 译者注}
+\begin{shell}
+    awk '{ printf("%6.2f %s\n", $2 * $3, $0) }' emp.data | sort -n
+\end{shell}
+将 awk 的输出通过管道传递给 \texttt{sort} 命令, 最后输出:
+\marginpar{9}
+\begin{file}
+      0.00 Beth    4.00    0
+      0.00 Dan     3.75    0
+     40.00 Kathy   4.00    10
+     76.50 Susie   4.25    18
+    100.00 Mark    5.00    20
+    121.00 Mary    5.50    22
+\end{file}
+
+\section{选择}
+\label{sec:selection}
+
+Awk 的模式非常擅长从输入中选择感兴趣的行, 以便进行进一步的处理. 因为一个没有
+动作的模式会将所有匹配的行打印出来, 所以许多 awk 程序仅含有一条单独的模式.
+这一节给出的的例子, 其模式具有很高的实用价值.
+
+\subsection{通过比较进行选择}
+\label{subsec:selection_by_comparison}
+
+这个程序使用一个比较模式来选择某些雇员的记录, 条件是他的每小时工资大于等于
+\$5.00, 也就是第二个字段大于等于 5:
+\begin{awkcode}
+    $2 >= 5
+\end{awkcode}
+它从 \filename{emp.data} 中选择这些行:
+\begin{awkcode}
+    Mark    5.00    20
+    Mary    5.50    22
+\end{awkcode}
+
+\subsection{通过计算进行选择}
+\label{subsec:selection_by_computation}
+
+程序
+\begin{awkcode}
+    $2 * $3 > 50 { printf("$%.2f for %s\n", $2 * $3, $1) }
+\end{awkcode}
+打印那些报酬超过 \$50 的雇员:
+\begin{file}
+    $100.00 for Mark
+    $121.00 for Mary
+    $76.50 for Susie
+\end{file}
+
+\subsection{通过文本内容选择}
+\label{subsec:selection_by_text_content}
+
+除了数值选择, 用户也可以选择那些包含特定单词或短语的输入行. 这个程序打印所有
+第一个字段是 \texttt{Susie} 的行:
+\begin{awkcode}
+    $1 == "Susie"
+\end{awkcode}
+操作符 \texttt{==} 测试相等性. 用户也可以搜索含有任意字母, 单词或短语的文本,
+通过一个叫做\cterm{正则表达式} (\term{regular expressions}) 的模式来完成.
+这个程序打印所有包含 \texttt{Susie} 的行:
+\marginpar{10}
+\begin{awkcode}
+    /Susie/
+\end{awkcode}
+输出是
+\begin{file}
+    Susie   4.25    18
+\end{file}
+正则表达式可以用来指定非常精细的模式, \ref{sec:patterns} 节包含了一
+个完整的讨论.
+
+\subsection{模式的组合}
+\label{subsec:combinations_of_patterns}
+
+模式可以使用括号和逻辑运算符进行组合, 逻辑运算符包括 \AND, \OR, 和 \NOT,
+分别表示 AND, OR, 和 NOT. 程序
+\begin{awkcode}
+    $2 >= 4 || $3 >= 20
+\end{awkcode}
+打印那些 \verb'$2' 至少为 4, 或者 \verb'$3' 至少为 20 的行:
+\begin{awkcode}
+    Beth    4.00    0
+    Kathy   4.00    10
+    Mark    5.00    20
+    Mary    5.50    22
+    Susie   4.25    18
+\end{awkcode}
+两个条件都满足的行只输出一次. 将这个程序与下面这个程序作对比, 它包含两
+个模式:
+\begin{awkcode}
+    $2 >= 4
+    $3 >= 20
+\end{awkcode}
+如果某行对这两个条件都满足, 它会被打印两次
+\begin{awkcode}
+    Beth    4.00    0
+    Kathy   4.00    10
+    Mark    5.00    20
+    Mark    5.00    20
+    Mary    5.50    22
+    Mary    5.50    22
+    Susie   4.25    18
+\end{awkcode}
+注意程序
+\begin{awkcode}
+    !($2 < 4 && $3 < 20)
+\end{awkcode}
+打印的行不满足这样的条件: \verb'$2' 小于 4, 并且 \verb'$3' 也小于 20; 这个
+条件判断与上面的第一个等价, 虽然在可读性方面差了一点.
+
+\subsection{数据验证}
+\label{subsec:data_validation}
+
+真实的数据总是存在错误. 检查数据是否具有合理的值, 格式是否正确,
+这种任务通常称作\cterm{数据验证} (\term{data validation}), 在这一方面 awk
+是一款非常优秀的工具.
+
+数据验证在本质上是否定: 不打印具有期望的属性的行, 而是打印可疑行.  接下来的
+程序使用比较模式, 将 5 条合理性测试应用到 \filename{emp.data} 的每一行:
+\marginpar{11}
+\begin{awkcode}
+    NF != 3   { print $0, "number of fields is not equal to 3" }
+    $2 < 3.35 { print $0, "rate is below minimum wage" }
+    $2 > 10   { print $0, "rate exceeds $10 per hour" }
+    $3 < 0    { print $0, "negative hours worked" }
+    $3 > 60   { print $0, "too many hours worked" }
+\end{awkcode}
+如果数据没有错误, 就不会有输出.
+
+\subsection{\BEGIN 与 \END}
+\label{subsec:an_awk_tutorial_begin_and_end}
+
+特殊的模式 \BEGIN 在第一个输入文件的第一行之前被匹配, \END 在最后一个输入
+文件的最后一行被处理之后匹配. 这个程序使用 \BEGIN 打印一个标题:
+\begin{awkcode}
+    BEGIN { print "NAME     RATE    HOURS"; print "" }
+          { print }
+\end{awkcode}
+输出是
+\begin{awkcode}
+    NAME     RATE    HOURS
+
+    Beth    4.00    0
+    Dan     3.75    0
+    Kathy   4.00    10
+    Mark    5.00    20
+    Mary    5.50    22
+    Susie   4.25    18
+\end{awkcode}
+可以在同一行放置多个语句, 语句之间用分号分开. 注意 \verb'print ""' 打
+印一个空行, 它与一个单独的 \print 并不相同, 后者打印当前行.
+
+\section{用 AWK 计算}
+\label{sec:computing_with_awk}
+
+一个动作就是一个语句序列, 语句之间用分号或换行符分开. 读者已经见过只有一条
+单独的 \print 语句的动作. 这一小节提供的例子所包含的语句可以用来进行简单
+的数学或字符串计算. 在这些语句里, 不仅可以使用内建变量, 比如 \nf, 还
+可以自己定义变量, 这些变量可以用来计算, 存储数据, 等等. 在 awk 中, 用户创建
+的变量不需要事先声明就可以使用.
+
+\subsection{计数}
+\label{subsec:counting}
+
+这个程序用一个变量 \texttt{emp} 计算工作时长超过 15 个小时的员工人数:
+\marginpar{12}
+\begin{awkcode}
+    $3 > 15 { emp = emp + 1 }
+    END     { print emp, "employees worked more than 15 hours" }
+\end{awkcode}
+对每一个第三个字段超过 15 的行, 变量 \texttt{emp} 的值就加 1. 用
+\filename{emp.data} 作输入数据, 这个程序输出:
+\begin{file}
+    3 employees worked more than 15 hours
+\end{file}
+当 awk 的变量作为数值使用时, 默认初始值为 0, 所以我们没必要初始化
+\texttt{emp}.
+
+\subsection{计算总和与平均数}
+\label{subsec:computing_sums_and_averages}
+
+为了计算雇员的人数, 我们可以使用内建变量 \nr, 它的值是到目前为止读取到的行
+数; 当所有输入都处理完毕时, 它的值就是读取到的行数.
+\begin{awkcode}
+    END {print NR, "employees" }
+\end{awkcode}
+输出是:
+\begin{file}
+    6 employees
+\end{file}
+
+这里有个程序利用 \nr 来计算平均报酬:
+\begin{awkcode}
+        { pay = pay + $2 * $3 }
+        END { print NR, "employees"
+              print "total pay is", pay
+              print "average pay is", pay / NR
+            }
+\end{awkcode}
+第一个动作累加所有雇员的报酬. \END 动作打印:
+\begin{file}
+    6 employees
+    total pay is 337.5
+    average pay is 56.25
+\end{file}
+很明显, \printf 可以用来产生更加美观的输出. 这个程序有一个潜在的错误: 一
+种不常见的情况是 \nr 的值为 0, 程序会尝试将 0 作除数, 此时 awk 就会产生一
+条错误消息.
+
+\subsection{操作文本}
+\label{subsec:handling_text}
+
+Awk 的长处之一是它可以非常方便地对字符串进行操作, 就像大多数其他语言操
+作数值那
+样方便. Awk 的变量除了可以存储数值, 还可以存储字符串. 这个程序搜索每小时
+工资最高的雇员:
+\begin{awkcode}
+    $2 > maxrate { maxrate = $2; maxemp = $1 }
+    END { print "highest hourly rate:", maxrate, "for", maxemp }
+\end{awkcode}
+它的输出是:
+\marginpar{13}
+\begin{file}
+    highest hourly rate: 5.50 for Mary
+\end{file}
+在这个程序里, 变量 \texttt{maxrate} 保存的是数值, 而 \texttt{maxemp} 保存
+的是字符串. (如果有多个雇员都拥有相同的最高每小时工资, 这个程序只会打印第
+一个人的名字.)
+
+\subsection{字符串拼接}
+\label{subsec:string_concatenation}
+
+可以通过旧字符串的组合来生成一个新字符串; 这个操作叫作\cterm{拼接}
+(\term{concatenation}). 程序
+\begin{awkcode}
+        { names = names $1 " " }
+    END { print names }
+\end{awkcode}
+将所有雇员的名字都收集到一个单独的字符串中, 每一次拼接都是把名字与一个空格
+符添加到变量 \texttt{names} 的值的末尾. \texttt{names} 在 \END 动作
+中被打印出来:
+\begin{file}
+    Beth Dan Kathy Mark Mary Susie 
+\end{file}
+在一个 awk 程序中, 字符串的拼接操作通过陆续写出字符串来完成. 对每一个输入行,
+上面程序中的第一条语句将三个字符串连接在一起: \texttt{names} 早先的值,
+第一个字段, 以及一个空格; 然后再将结果字符串赋值给 \texttt{names}. 于是, 当
+所有的输入行都读取完毕时, \texttt{names} 包含有一个由所有雇员名字组成的,
+每个
+名字之间由空格分隔的字符串. 用来存储字符串的变量的初始值默认为空字符串 (也
+就是说该字符串不包含任何字符), 因此在这个程序里, \texttt{names} 不需要显式
+地初始化.
+
+\subsection{打印最后一行}
+\label{subsec:printing_the_last_input_line}
+
+虽然在 \END 动作里, \nr 的值被保留了下来, 但是 \verb'$0' 却不会. 程序
+\begin{awkcode}
+        { last = $0 }
+    END { print last }
+\end{awkcode}
+可以用来打印文件的最后一行:
+\begin{file}
+    Susie   4.25    18
+\end{file}
+
+\subsection{内建函数}
+\label{subsec:built_in_functions}
+
+我们已经看到 awk 提供有内建变量, 这些变量可以用来维护经常需要用到的量, 比如
+字段的个数, 以及当前输入行的行号. 同样, awk 也提供用来计算其他值的
+内建函数. 求平方根, 取对数, 随机数, 除了这些数学函数, 还有其他用来操作文本
+的函数. 其中之一是 \texttt{length}, 它用来计算字符串中字符的个数. 例如,
+这个程序计算每一个人的名字的长度:
+\begin{awkcode}
+    { print $1, length($1) }
+\end{awkcode}
+程序运行结果是:
+\marginpar{14}
+\begin{file}
+    Beth 4
+    Dan 3
+    Kathy 5
+    Mark 4
+    Mary 4
+    Susie 5
+\end{file}
+
+\subsection{行, 单词与字符的计数}
+\label{subsec:counting_lines_words_and_characters}
+
+这个程序使用 \length, \nf 与 \nr 计算行, 单词与字符的数量, 为方便起见, 我们
+将每个字段都当成一个单词.
+\begin{awkcode}
+    { nc = nc + length($0) + 1
+      nw = nw + NF
+    }
+    END { print NR, "lines,", nw, "words,", nc, "characters" }
+\end{awkcode}
+文件 \filename{emp.data} 含有
+\begin{file}
+    6 lines, 18 words, 77 characters
+\end{file}
+我们为每一个输入行末尾的换行符加 1, 这是因为 \verb'$0' 不包含换行符.
+
+\section{流程控制语句}
+\label{sec:control_flow_statements}
+
+Awk 提供有用于决策的 \verb'if-else'语句, 以及循环语句, 所有的这些都来源于
+C 语言. 它们只能用在动作 (Action) 里.
+
+\subsection{\texttt{If-Else} 语句}
+\label{subsec:if_else_statement}
+
+下面这个程序计算每小时工资多于 \$6.00 的雇员的总报酬与平均报酬. 在计算平均
+数时, 它用到了 \texttt{if} 语句, 避免用 0 作除数.
+\begin{awkcode}
+    $2 > 6 { n = n + 1; pay = pay + $2 * $3 }
+    END    { if (n > 0)
+               print n, "employees, total pay is", pay,
+                        "average pay is", pay/n
+           else
+               print "no employees are paid more than $6/hour"
+           }
+\end{awkcode}
+\filename{emp.data} 的输出是:
+\begin{file}
+    no employees are paid more than $6/hour
+\end{file}
+\marginpar{15}
+在 \verb'if-else' 语句里, \verb'if' 后面的条件被求值, 如果条件为真, 第一个
+\print 语句执行, 否则是第二个 \print 语句被执行. 注意到, 在逗号后面断
+行, 我们可以将一个长语句延续到下一行.
+
+\subsection{\texttt{While} 语句}
+\label{subsec:while_statement}
+
+一个 \texttt{while} 含有一个条件判断与一个循环体. 当条件为真时, 循环体
+执行. 下面这个程序展示了一笔钱在一个特定的利率下, 其价值如何随着投资
+时间的增长而增加, 价值计算的公式是 $value = amount (1 + rate)^{years}$.
+\begin{awkcode}
+    # interest1 - compute compound interest
+    #   input:  amount  rate  years
+    #   output: compounded value at the end of each year
+
+    {   i = 1
+        while (i <= $3) {
+            printf("\t%.2f\n", $1 * (1 + $2) ^ i)
+            i = i + 1
+        }
+    }
+\end{awkcode}
+\while 后面被括号包围起来的表达式是条件判断; 循环体是跟在条件判断后面的,
+被花
+括号包围起来的的两条语句. \printf 格式控制字符串里的 \verb'\t' 表示一个制
+表符; \verb'^' 是指数运算符. 从井号 (\verb'#') 开始, 直到行末的文本是
+\cterm{注释} (\term{comment}), 注释会被 awk 忽略, 但有助于其他人读懂程
+序.
+
+读者可以键入三个数, 看一下不同的本金, 利率和时间会产生怎样的结果. 举
+个例子, 这个交易展示了 \$1000 在 $6\%$ 与 $12\%$ 的利率下, 在5 年的时间里如
+何升值:
+\begin{shell}
+    $ awk -f interest1
+    1000 .06 5
+            1060.00
+            1123.60
+            1191.02
+            1262.48
+            1338.23
+    1000 .12 5
+            1120.00
+            1254.40
+            1404.93
+            1573.52
+            1762.34
+\end{shell}
+
+\subsection{\texttt{For} 语句}
+\label{subsec:for_statement}
+\marginpar{16}
+大多数循环都包括初始化, 测试, 增值, 而 \texttt{for} 语句将这三者压缩成一行.
+这里是前一个计算投资回报的程序, 不过这次用 \for 循环:
+\begin{awkcode}
+    # interest2 - compute compound interest
+    #   input:  amount  rate  years
+    #   output: compounded value at the end of each year
+
+    {   for (i = 1; i <= $3; i = i + 1)
+            printf("\t%.2f\n", $1 * (1 + $2) ^ i)
+    }
+\end{awkcode}
+初始化语句 \texttt{i = 1} 只执行一次. 接下来, 判断条件 \verb'i <= $3' 是否
+成立;
+如果测试结果为真, 循环体的 \printf 语句被执行. 执行完循环体之后, 增值语句
+\texttt{i = i + 1} 执行, 循环的下一次迭代从条件的另一次测试开始. 代码很
+紧凑, 因为循环体只有一条语句, 也就不再需要花括号.
+
+\section{数组}
+\label{sec:arrays}
+
+Awk 提供了数组, 用来存储一组相关的值. 虽然数组给予了 awk 非常可观的力量,
+但是
+我们在这里只展示一个简单的例子. 下面这个程序按行逆序显示输入数据. 第一个
+动作将输入行放入数组 \texttt{line} 的下一个元素中; 也就是说, 第一行放入
+\texttt{line[1]}, 第二行放入 \texttt{line[2]}, 依次类推. \END 动作用一个
+\while 循环, 从数组的最后一个元素开始打印, 一直打印到第一个元素为止:
+\begin{awkcode}
+    # reverse - print input in reverse order by line
+
+        { line[NR] = $0 }  # remember each input line
+
+    END { i = NR           # print lines in reverse order
+          while (i > 0) {
+              print line[i]
+              i = i - 1
+          }
+        }
+\end{awkcode}
+用 \filename{emp.data} 作输入, 输出是
+\begin{file}
+    Susie   4.25    18
+    Mary    5.50    22
+    Mark    5.00    20
+    Kathy   4.00    10
+    Dan     3.75    0
+    Beth    4.00    0
+\end{file}
+这是用 \for 循环实现的等价的程序:
+\marginpar{17}
+\begin{awkcode}
+    # reverse - print input in reverse order by line
+
+        { line[NR] = $0 }  # remember each input line
+
+    END { for (i = NR; i > 0; i = i - 1)
+              print line[i]
+        }
+\end{awkcode}
+
+\section{实用``一行''手册}
+\label{sec:a_handful_of_useful_one_liners}
+
+虽然 awk 可以写出非常复杂的程序, 但是许多实用的程序并不比我们目前
+为止看到的复杂多少. 这里有一些小程序集合, 对读者应该会有一些参考价值. 大多数
+是我们已经讨论过的程序的变形.
+\begin{enumerate}
+\item 输入行的总行数
+\begin{awkcode}
+    END { print NR }
+\end{awkcode}
+\item 打印第 10 行
+\begin{awkcode}
+    NR == 10
+\end{awkcode}
+\item 打印每一个输入行的最后一个字段
+\begin{awkcode}
+    { print $NF }
+\end{awkcode}
+\item 打印最后一行的最后一个字段
+\begin{awkcode}
+    { field = $NF }
+    END { print field }
+    \end{awkcode}
+\item 打印字段数多于4个的输入行
+\begin{awkcode}
+    NF > 4
+\end{awkcode}
+\item 打印最后一个字段值大于4的输入行
+\begin{awkcode}
+    $NF > 4
+\end{awkcode}
+\item 打印所有输入行的字段数的总和
+\begin{awkcode}
+    { nf = nf + NF }
+    END { print nf }
+\end{awkcode}
+\item 打印包含 \texttt{Beth} 的行的数量
+\begin{awkcode}
+    /Beth/ { nlines = nlines + 1 }
+    END { print nlines }
+\end{awkcode}
+\item 打印具有最大值的第一个字段, 以及包含它的行 (假设 \verb'$1' 总是
+\marginpar{18}
+    正的)
+\begin{awkcode}
+    $1 > max { max = $1; maxline = $0 }
+    END { print max, maxline }
+\end{awkcode}
+\item 打印至少包含一个字段的行
+\begin{awkcode}
+    NF > 0
+\end{awkcode}
+\item 打印长度超过80个字符的行
+\begin{awkcode}
+    length($0) > 80
+\end{awkcode}
+\item 在每一行的前面加上它的字段数
+\begin{awkcode}
+    { print NF, $0 }
+\end{awkcode}
+\item 打印每一行的第1与第2个字段, 但顺序相反
+\begin{awkcode}
+    { print $2, $1 }
+\end{awkcode}
+\item 交换每一行的第1与第2个字段, 并打印该行
+\begin{awkcode}
+    { temp = $1; $1 = $2; $2 = temp; print }
+\end{awkcode}
+\item 将每一行的第一个字段用行号代替
+\begin{awkcode}
+    { $1 = NR; print }
+\end{awkcode}
+\item 打印删除了第2个字段后的行
+\begin{awkcode}
+    { $2 = ""; print }
+\end{awkcode}
+\item 将每一行的字段按逆序打印
+\begin{awkcode}
+    { for (i = NF; i > 0; i = i - 1) printf("%s ", $i)
+      printf("\n")
+    }
+\end{awkcode}
+\item 打印每一行的所有字段值之和
+\begin{awkcode}
+    { sum = 0
+      for (i = 1; i <= NF; i = i + 1) sum = sum + $i
+      print sum
+    }
+\end{awkcode}
+\item 将所有行的所有字段值累加起来
+\begin{awkcode}
+        { for (i = 1; i <= NF; i = i + 1) sum = sum + $i }
+    END { print sum }
+\end{awkcode}
+\item 将每一行的每一个字段用它的绝对值替换
+\begin{awkcode}
+    { for (i = 1; i <= NF; i = i + 1) if ($i < 0) $i = -$i
+      print
+    }
+\end{awkcode}
+\end{enumerate}
+
+\section{接下来}
+\label{sec:what_next}
+\marginpar{19}
+读者已经见识过了 awk 的要点. 本章的每个程序都是由
+多个 \patact 语句组成的序
+列. Awk 用模式测试每一个输入行, 如果模式匹配, 对应的动作就会执行. 模式
+可以包括数值或字符串比较, 动作也可以包含计算和格式化输出. 除了可以自动从
+输入文件中读取数据, awk 还会将每一个输入行分割为字段. 它还提供了一系列
+的内建变量与函数, 当然你也可以自己定义. 有了这些特征的帮助, 许多实用
+的计算可以用非常简短的程序实现 --- 如果使用其他语言实现同样的功能, 那么
+就要考虑到许多细节, 而 awk 程序可以隐式处理这些细节.
+
+本书的剩下部分将会详细讨论这些基本概念. 由于有些程序会比本章给出的示例
+程序大一些, 我们强烈建议读者尽可能开始自己写程序. 这会使你对 awk 更加熟悉,
+也更容易理解稍大一些的程序. 更进一步讲, 没有什么能比一个简单的实验更能说明
+问题. 读者还是应该浏览整本书; 每一个例子都传达出一些关于 awk 的知识点, 可能是
+关于如何使用一个语言特性, 也可能是如何创建一个有趣的程序.
+% Although there is no page 20/210 in original book.
+\marginpar{20}
