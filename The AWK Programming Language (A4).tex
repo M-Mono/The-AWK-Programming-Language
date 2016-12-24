@@ -1,11 +1,9 @@
-% MacTeX 2016 with XeLaTeX + Inziu Iosevka
-
-\input{./Sections/preamble}
+\input{./Chapters/preamble}
 
 \begin{document}
 \begin{figure}[ht]
 	\begin{center}
-		\includepdf[width=\paperwidth]{Title.jpg}
+		\includepdf[width=\paperwidth]{Frontmatter.jpg}
 	\end{center}
 \end{figure}
 \newpage
@@ -14,23 +12,23 @@
 \maketitle
 \pdfbookmark[0]{目录}{contents}
 \tableofcontents
-\include{./Sections/preface}
+\include{./Chapters/preface}
 
 \mainmatter
-\include{./Sections/an_awk_tutorial}
-\include{./Sections/the_awk_language}
-\include{./Sections/data_processing}
-\include{./Sections/reports_and_databases}
-\include{./Sections/processing_words}
-\include{./Sections/little_languages}
-\include{./Sections/experiments_with_algorithms}
-\include{./Sections/epilog}
+\include{./Chapters/an_awk_tutorial}
+\include{./Chapters/the_awk_language}
+\include{./Chapters/data_processing}
+\include{./Chapters/reports_and_databases}
+\include{./Chapters/processing_words}
+\include{./Chapters/little_languages}
+\include{./Chapters/experiments_with_algorithms}
+\include{./Chapters/epilog}
 
 \appendix
-\include{./Sections/awk_summary}
-\include{./Sections/answers_to_selected_exercises}
+\include{./Chapters/awk_summary}
+\include{./Chapters/answers_to_selected_exercises}
 
 \backmatter
-\include{./Sections/index}
+\include{./Chapters/index}
 
 \end{document}
