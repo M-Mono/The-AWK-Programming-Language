@@ -6,9 +6,9 @@ Alfred V. Aho, Brian W. Kernighan，and Peter J. Weinberger
 
 由于是 1988 年的老书，其中对 GAWK 最新版本对 AWK 的扩展没有提及，但这并不妨碍其称为一本经典。
 
-和 The C Programming Language 类似，翻翻这本书的目录，你会发现，它只用了两个章节的篇幅介绍 AWK 的语法，而剩下的篇幅都是用 AWK 做为一个简洁紧凑的玩具语言，通过各种通俗易懂的程序，来向你展示从关系型数据库到编译器以及 Unix 系统上各种常用程序实现的基本原理。凭借几位大牛的深厚功力，这些内容的讲解真是深入浅出、举重若轻，让人大呼过瘾。如果你轻信了书中前言所说的，学AWK，只要看了前两章就可以了，那么你的损失可就大了。
+和 The C Programming Language 类似，翻翻这本书的目录，你会发现，它只用了两个章节的篇幅介绍 AWK 的语法，而剩下的篇幅都是用 AWK 做为一个简洁紧凑的玩具语言，通过各种通俗易懂的程序，来向你展示从关系型数据库到编译器以及 Unix 系统上各种常用程序实现的基本原理。凭借几位大牛的深厚功力，这些内容的讲解真是深入浅出、举重若轻，让人大呼过瘾。如果你轻信了书中前言所说的，学 AWK，只要看了前两章就可以了，那么你的损失可就大了。
 
-此外，由于 AWK 的语法设计上和 C 保持了一致，你应该可以从书中的AWK程序实例中见到很多熟悉的C的编码范式（Coding Idiom）。
+此外，由于 AWK 的语法设计上和 C 保持了一致，你应该可以从书中的 AWK 程序实例中见到很多熟悉的 C 的编码范式（Coding Idiom）。
 
 倒数第二章，作者利用AWK实现了三种排序算法和两种图遍历算法，对于大多数读者而言，可能这一章的内容会显得更加亲切一些。
 
@@ -36,4 +36,4 @@ Alfred V. Aho, Brian W. Kernighan，and Peter J. Weinberger
 
 
 + Editor
-  - [TeXstudio 2.12.0](http://texstudio.sourceforge.net/)
+  - [TeXstudio 2.12.2](http://texstudio.sourceforge.net/)
