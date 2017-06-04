@@ -23,17 +23,19 @@ Alfred V. Aho, Brian W. Kernighan，and Peter J. Weinberger
 
 
 + Apple OS X & macOS
-  - [MacTeX 2016](https://www.tug.org/mactex/)
+  - [MacTeX /2017](https://www.tug.org/mactex/)
 
 
 + GNU/Linux & Microsoft Windows
-  - [TeX Live 2016](https://www.tug.org/texlive/)
+  - [TeX Live /2017](https://www.tug.org/texlive/)
 
 
 + Fonts
-  - [Source Han Sans 1.004](https://github.com/adobe-fonts/source-han-sans)
-  - [Source Code Pro 2.030](https://github.com/adobe-fonts/source-code-pro)
+  - [Source Han Sans /1.004](https://github.com/adobe-fonts/source-han-sans)
+  - [Source Code Pro /2.030](https://github.com/adobe-fonts/source-code-pro)
 
 
 + Editor
-  - [TeXstudio 2.12.2](http://texstudio.sourceforge.net/)
+  - [TeXstudio /2.12.4](http://texstudio.sourceforge.net/)
+
++ XeLaTeX 编译 PDF 1.7 版本使用参数 --output-driver="xdvipdfmx -q -E -V 7"
